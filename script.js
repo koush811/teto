@@ -48,9 +48,7 @@ function draw() {
       if (current[y][x]) drawBlock(currentX + x, currentY + y, currentColor);
     }
   }
-
   drawHold();
-
 }
 
 function collision(nx, ny, shape) {
@@ -104,7 +102,7 @@ document.addEventListener('keydown', e => {
     let r = rotate(current);
     if (!collision(currentX, currentY, r)) current = r;
   }
-  if (e.key === 'Shift') hold(); // ← Shiftキーでホールド
+  if (e.key === 'Shift') hold();
   draw();
 });
 
@@ -138,7 +136,7 @@ function newTetromino() {
   currentColor = COLORS[idx];
   currentX = 3;
   currentY = 0;
-  holdUsed = false; // ← ここを追加
+  holdUsed = false; 
 
   if (collision(currentX, currentY, current)) {
     GameOver = true;
