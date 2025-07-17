@@ -18,16 +18,10 @@ const mino = [
 ];
 const COLORS = ['cyan','yellow','purple','green','red','blue','orange'];
 
+
 let board = Array.from({length: ROWS}, () => Array(COLS).fill(0));
 let current, currentX, currentY, currentColor;
 
-function newTetromino() {
-  const idx = Math.floor(Math.random() * TETROMINOS.length);
-  current = mino[idx];
-  currentColor = COLORS[idx];
-  currentX = 3;
-  currentY = 0;
-}
 
 function drawBlock(x, y, color) {
   ctx.fillStyle = color;
@@ -36,17 +30,31 @@ function drawBlock(x, y, color) {
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  // ステージ
   for (let y = 0; y < ROWS; y++) {
     for (let x = 0; x < COLS; x++) {
       if (board[y][x]) drawBlock(x, y, board[y][x]);
     }
   }
-  // 今のミノ
   for (let y = 0; y < current.length; y++) {
     for (let x = 0; x < current[y].length; x++) {
       if (current[y][x]) drawBlock(currentX + x, currentY + y, currentColor);
     }
+  }
+  ctx.strokeStyle = 'rgba(138, 138, 138, 1)'; 
+  ctx.lineWidth = 1;
+
+  for (let x = 0; x <= COLS; x++) {
+    ctx.beginPath();
+    ctx.moveTo(x * BLOCK_SIZE, 0);
+    ctx.lineTo(x * BLOCK_SIZE, ROWS * BLOCK_SIZE);
+    ctx.stroke();
+  }
+
+  for (let y = 0; y <= ROWS; y++) {
+    ctx.beginPath();
+    ctx.moveTo(0, y * BLOCK_SIZE);
+    ctx.lineTo(COLS * BLOCK_SIZE, y * BLOCK_SIZE);
+    ctx.stroke();
   }
   drawHold();
 }
@@ -80,18 +88,30 @@ function clearLines() {
   while (board.length < ROWS) board.unshift(Array(COLS).fill(0));
 }
 
+let isLocking = false; 
+
 function drop() {
-  if (!collision(currentX, currentY + 1, current)) {
-    currentY++;
-  } else {
-    merge();
-    clearLines();
-    newTetromino();
-    if (collision(currentX, currentY, current)) {
-      board = Array.from({length: ROWS}, () => Array(COLS).fill(0)); 
+ if (!collision(currentX, currentY + 1, current)) {
+  currentY++;
+  isLocking = false; 
+ } else {
+  if (!isLocking) {
+    isLocking = true;
+  setTimeout(() => {
+      if (collision(currentX, currentY + 1, current)) {
+        merge();
+        clearLines();
+        newTetromino();
+      if (collision(currentX, currentY, current)) {
+        board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+        }
+      }
+      isLocking = false; 
+      draw();
+      }, 1000); 
     }
   }
-  draw();
+  draw(); 
 }
 
 document.addEventListener('keydown', e => {
@@ -107,6 +127,9 @@ document.addEventListener('keydown', e => {
 });
 
 function gameLoop() {
+  if(GameOver){
+    return
+  }
   drop();
   setTimeout(gameLoop, 500);
 }
@@ -115,7 +138,6 @@ let gameInterval = null;
 const dropSpeed = 100;
 
 function startGame() {
-  if (gameInterval) clearInterval(gameInterval);
   board = Array.from({length: ROWS}, () => Array(COLS).fill(0));
   holdMino = null;         
   holdColor = null;        
@@ -123,15 +145,34 @@ function startGame() {
   newTetromino();
   draw();
   GameOver = false;
-  gameInterval = setInterval(drop, dropSpeed);
 }
 
 document.getElementById('resetbtn').addEventListener('click', startGame);
 
 let GameOver = false;
 
+let minoQueue = [];
+
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1)); 
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+function refillQueue() {
+  const bag = shuffle([...Array(mino.length).keys()]); 
+  minoQueue.push(...bag); 
+}
+
+
 function newTetromino() {
-  const idx = Math.floor(Math.random() * mino.length);
+
+  if(minoQueue.length === 0){
+    refillQueue();
+  }
+  const idx = minoQueue.shift();
   current = mino[idx];
   currentColor = COLORS[idx];
   currentX = 3;
@@ -147,7 +188,7 @@ function newTetromino() {
       ctx.fillStyle = "white";
       ctx.textAlign = "center";
       ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
-    }, 50);
+    }, 2000);
   }
 }
 
@@ -173,17 +214,18 @@ function hold() {
   currentY = 0;
 
   if (collision(currentX, currentY, current)) {
-   GameOver = true;
-   clearInterval(gameInterval);
-   draw();
-   setTimeout(() => {
-   ctx.font = "bold 32px sans-serif";
-    ctx.fillStyle = "white";
-    ctx.textAlign = "center";
-    ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
-   }, 50);
-   return;
-  }
+    GameOver = true;
+    clearInterval(gameInterval);
+    draw();
+    drawHold();
+    setTimeout(() => {
+    ctx.font = "bold 32px sans-serif";
+      ctx.fillStyle = "white";
+      ctx.textAlign = "center";
+      ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
+    }, 1000);
+    return;
+    }
  }
 
  holdUsed = true;
@@ -197,7 +239,7 @@ function drawHold() {
   for (let y = 0; y < holdMino.length; y++) {
   for (let x = 0; x < holdMino[y].length; x++) {
    if (holdMino[y][x]) {
-    drawBlock(x + COLS + 1, y + 1, holdColor); // 右側に描画
+    drawBlock(x + COLS + 1, y + 1, holdColor); 
    }
   }
  }
@@ -207,4 +249,5 @@ newTetromino();
 draw();
 gameLoop();
 drawHold();
+startGame();
 

@@ -10,9 +10,12 @@ body {
       align-items: center;
       height: 100vh;
     }
-#gameCanvas {
+    #gameCanvas {
       background: #000;
       display: block;
       margin: auto;
       box-shadow: 0 0 10px rgb(255, 255, 255);
     }
+canvas{
+  border: solid white 1px;
+}    
