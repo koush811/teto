@@ -57,6 +57,13 @@ function draw() {
     ctx.stroke();
   }
   drawHold();
+
+  if (GameOver) {
+    ctx.font = "bold 48px sans-serif";
+    ctx.fillStyle = "white";
+    ctx.textAlign = "center";
+    ctx.fillText("GAME OVER", (COLS * BLOCK_SIZE) / 2, (ROWS * BLOCK_SIZE) / 2);
+  }
 }
 
 function collision(nx, ny, shape) {
@@ -128,7 +135,7 @@ document.addEventListener('keydown', e => {
 
 function gameLoop() {
   if(GameOver){
-    return
+    return;
   }
   drop();
   setTimeout(gameLoop, 500);
@@ -144,7 +151,8 @@ function startGame() {
   holdUsed = false;
   newTetromino();
   draw();
-  GameOver = false;
+  gameLoop();
+  GameOver();
 }
 
 document.getElementById('resetbtn').addEventListener('click', startGame);
@@ -181,14 +189,8 @@ function newTetromino() {
 
   if (collision(currentX, currentY, current)) {
     GameOver = true;
-    clearInterval(gameInterval);
     draw();
-    setTimeout(() => {
-      ctx.font = "bold 32px sans-serif";
-      ctx.fillStyle = "white";
-      ctx.textAlign = "center";
-      ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
-    }, 2000);
+    
   }
 }
 
@@ -219,11 +221,12 @@ function hold() {
     draw();
     drawHold();
     setTimeout(() => {
-    ctx.font = "bold 32px sans-serif";
+    /*ctx.font = "bold 32px sans-serif";
       ctx.fillStyle = "white";
       ctx.textAlign = "center";
-      ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
-    }, 1000);
+      ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);*/
+      document.getElementById('message').textContent = "ゲームオーバー"
+    }, 2000);
     return;
     }
  }
@@ -245,9 +248,6 @@ function drawHold() {
  }
 }
 
-newTetromino();
-draw();
-gameLoop();
-drawHold();
+
 startGame();
 
