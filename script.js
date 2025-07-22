@@ -6,6 +6,7 @@ const BLOCK_SIZE = 24;
 
 canvas.height = ROWS * BLOCK_SIZE;
 canvas.width = (COLS + 6) * BLOCK_SIZE;
+
 //ミノ
 const mino = [
   [[1,1,1,1]], // I
@@ -16,8 +17,16 @@ const mino = [
   [[1,0,0],[1,1,1]], // J
   [[0,0,1],[1,1,1]]  // L
 ];
+
 const COLORS = ['cyan','yellow','purple','green','red','blue','orange'];
 
+const SRS_KICKS = [
+  [0, 0],   
+  [-1, 0],  
+  [-1, 1],  
+  [0, -2], 
+  [-1, -2]  
+];
 
 let board = Array.from({length: ROWS}, () => Array(COLS).fill(0));
 let current, currentX, currentY, currentColor;
@@ -41,7 +50,7 @@ function draw() {
     }
   }
   ctx.strokeStyle = 'rgba(138, 138, 138, 1)'; 
-  ctx.lineWidth = 1;
+  ctx.lineWidth = .7;
 
   for (let x = 0; x <= COLS; x++) {
     ctx.beginPath();
@@ -59,13 +68,13 @@ function draw() {
   drawHold();
 
   if (GameOver) {
-    ctx.font = "bold 48px sans-serif";
-    ctx.fillStyle = "white";
-    ctx.textAlign = "center";
     ctx.fillText("GAME OVER", (COLS * BLOCK_SIZE) / 2, (ROWS * BLOCK_SIZE) / 2);
+    document.getElementById('message').style.display = "flex";
+    draw();
   }
 }
 
+//衝突
 function collision(nx, ny, shape) {
   for (let y = 0; y < shape.length; y++) {
     for (let x = 0; x < shape[y].length; x++) {
@@ -78,6 +87,18 @@ function collision(nx, ny, shape) {
   return false;
 }
 
+//SRS
+function SRSRotate(shape, x, y, rotateFunc, kicks) {
+  const rotated = rotateFunc(shape);
+  for (let i = 0; i < kicks.length; i++) {
+    const [dx, dy] = kicks[i];
+    if (!collision(x + dx, y + dy, rotated)) {
+      return { success: true, shape: rotated, x: x + dx, y: y + dy };
+    }
+  }
+  return { success: false, shape, x, y };
+}
+
 function merge() {
   for (let y = 0; y < current.length; y++) {
     for (let x = 0; x < current[y].length; x++) {
@@ -88,6 +109,10 @@ function merge() {
 
 function rotate(shape) {
   return shape[0].map((_,i) => shape.map(row => row[i])).reverse();
+}
+
+function rotateCCW(shape) {
+  return shape[0].map((_, i) => shape.map(row => row[row.length - 1 - i]));
 }
 
 function clearLines() {
@@ -124,36 +149,52 @@ function drop() {
 document.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft' && !collision(currentX - 1, currentY, current)) currentX--;
   if (e.key === 'ArrowRight' && !collision(currentX + 1, currentY, current)) currentX++;
-  if (e.key === 'ArrowDown') drop();
-  if (e.key === 'ArrowUp') {
-    let r = rotate(current);
-    if (!collision(currentX, currentY, r)) current = r;
+  if (e.code === 'ArrowDown') drop();                
+  if (e.key === 'z') {//左
+    const result = SRSRotate(current, currentX, currentY, rotateCCW, SRS_KICKS);
+    if (result.success) {
+      current = result.shape;
+      currentX = result.x;
+      currentY = result.y;
+    }
+  }
+  if (e.key === 'ArrowUp') {//右
+    const result = SRSRotate(current, currentX, currentY, rotate, SRS_KICKS);
+    if (result.success) {
+      current = result.shape;
+      currentX = result.x;
+      currentY = result.y;
+    }
   }
   if (e.key === 'Shift') hold();
   draw();
 });
 
 function gameLoop() {
-  if(GameOver){
-    return;
+  if (!GameOver) {
+    drop();
   }
-  drop();
-  setTimeout(gameLoop, 500);
 }
 
 let gameInterval = null;
-const dropSpeed = 100;
+const dropSpeed = 400; //速度
 
 function startGame() {
   board = Array.from({length: ROWS}, () => Array(COLS).fill(0));
-  holdMino = null;         
-  holdColor = null;        
+  holdMino = null;
+  holdColor = null;
   holdUsed = false;
+  GameOver = false;
+  minoQueue = [];
   newTetromino();
   draw();
-  gameLoop();
-  GameOver();
+  if (gameInterval) {
+  clearInterval(gameInterval);
+  }
+  gameInterval = setInterval(gameLoop, dropSpeed); 
+  document.getElementById('message').style.display = "none";
 }
+
 
 document.getElementById('resetbtn').addEventListener('click', startGame);
 
@@ -190,7 +231,6 @@ function newTetromino() {
   if (collision(currentX, currentY, current)) {
     GameOver = true;
     draw();
-    
   }
 }
 
@@ -200,7 +240,6 @@ let holdUsed = false;
 
 function hold() {
  if (holdUsed) return;
-
  if (holdMino === null) {
   holdMino = current;
   holdColor = currentColor;
@@ -220,13 +259,6 @@ function hold() {
     clearInterval(gameInterval);
     draw();
     drawHold();
-    setTimeout(() => {
-    /*ctx.font = "bold 32px sans-serif";
-      ctx.fillStyle = "white";
-      ctx.textAlign = "center";
-      ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);*/
-      document.getElementById('message').textContent = "ゲームオーバー"
-    }, 2000);
     return;
     }
  }
@@ -247,7 +279,6 @@ function drawHold() {
   }
  }
 }
-
 
 startGame();
 

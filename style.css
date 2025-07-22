@@ -23,5 +23,14 @@ canvas{
   margin-right: 30px;
 }
 #message{
-  color: white;
+  position: absolute;
+  z-index: 10;
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  top: 42%;
+  left: 33%;
+  font-size: 500%;
+  background-color: rgba(240, 248, 255, 0.71);
+  padding: 40px;
 }
