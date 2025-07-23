@@ -105,6 +105,8 @@ function merge() {
       if (current[y][x]) board[currentY + y][currentX + x] = currentColor;
     }
   }
+  score += 10;
+  document.getElementById('score').textContent = score;
 }
 
 function rotate(shape) {
@@ -116,9 +118,32 @@ function rotateCCW(shape) {
 }
 
 function clearLines() {
-  board = board.filter(row => row.some(cell => !cell));
-  while (board.length < ROWS) board.unshift(Array(COLS).fill(0));
+  let linesCleared = 0;
+
+  for (let y = ROWS - 1; y >= 0; y--) {
+    if (board[y].every(cell => cell !== 0)) {
+      board.splice(y, 1);
+      board.unshift(Array(COLS).fill(0));
+      linesCleared++;
+      y++; 
+    }
+  }
+
+  if (linesCleared > 0) {
+    score += linesCleared * 100; 
+    document.getElementById('score').textContent = score;
+    checkClear(); 
+  }
 }
+
+function checkClear() {
+  if (score >= 1000) {
+    clearInterval(gameInterval);
+    document.getElementById('message2').style.display = "flex"; 
+  }
+}
+
+
 
 let isLocking = false; 
 
@@ -146,6 +171,19 @@ function drop() {
   draw(); 
 }
 
+function hardDrop() {
+  while (!collision(currentX, currentY + 1, current)) {
+    currentY++;
+  }
+  merge(); 
+  clearLines(); 
+  newTetromino(); 
+  draw(); 
+  isLocking = false; 
+}
+
+
+
 document.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft' && !collision(currentX - 1, currentY, current)) currentX--;
   if (e.key === 'ArrowRight' && !collision(currentX + 1, currentY, current)) currentX++;
@@ -168,6 +206,9 @@ document.addEventListener('keydown', e => {
   }
   if (e.key === 'Shift') hold();
   draw();
+  if (e.code === 'Space') {
+    hardDrop();
+  }
 });
 
 function gameLoop() {
@@ -188,19 +229,24 @@ function startGame() {
   minoQueue = [];
   newTetromino();
   draw();
+  score = 0;
+  document.getElementById('score').textContent = score; 
   if (gameInterval) {
   clearInterval(gameInterval);
   }
   gameInterval = setInterval(gameLoop, dropSpeed); 
   document.getElementById('message').style.display = "none";
+  document.getElementById('message2').style.display = "none";
+  
 }
-
 
 document.getElementById('resetbtn').addEventListener('click', startGame);
 
 let GameOver = false;
 
 let minoQueue = [];
+
+let score = 0;
 
 function shuffle(array) {
   for (let i = array.length - 1; i > 0; i--) {
