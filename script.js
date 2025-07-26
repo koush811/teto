@@ -9,24 +9,72 @@ canvas.width = (COLS + 6) * BLOCK_SIZE;
 
 //ミノ
 const mino = [
-  [[1,1,1,1]], // I
-  [[1,1],[1,1]], // O
-  [[0,1,0],[1,1,1]], // T
-  [[1,1,0],[0,1,1]], // S
-  [[0,1,1],[1,1,0]], // Z
-  [[1,0,0],[1,1,1]], // J
-  [[0,0,1],[1,1,1]]  // L
+  // Iミノ
+  [
+    [0,0,0,0],
+    [1,1,1,1],
+    [0,0,0,0],
+    [0,0,0,0]
+  ],
+  // Oミノ
+  [
+    [1,1],
+    [1,1]
+  ],
+  // Tミノ 
+  [
+    [0,1,0],
+    [1,1,1],
+    [0,0,0]
+  ],
+  // Sミノ
+  [
+    [0,1,1],
+    [1,1,0],
+    [0,0,0]
+  ],
+  // Zミノ
+  [
+    [1,1,0],
+    [0,1,1],
+    [0,0,0]
+  ],
+  // Jミノ
+  [
+    [1,0,0],
+    [1,1,1],
+    [0,0,0]
+  ],
+  // Lミノ
+  [
+    [0,0,1],
+    [1,1,1],
+    [0,0,0]
+  ]
 ];
+
 
 const COLORS = ['cyan','yellow','purple','green','red','blue','orange'];
 
-const SRS_KICKS = [
-  [0, 0],   
-  [-1, 0],  
-  [-1, 1],  
-  [0, -2], 
-  [-1, -2]  
+// Iミノ用キック
+const SRS_KICKS_I = [
+  [[0,0], [-2,0], [1,0], [-2,1], [1,-2]],   // 0→R
+  [[0,0], [-1,0], [2,0], [-1,-2], [2,1]],  // R→2
+  [[0,0], [2,0], [-1,0], [2,-1], [-1,2]],  // 2→L
+  [[0,0], [1,0], [-2,0], [1,2], [-2,-1]]   // L→0
 ];
+
+// T,S,Z,J,Lミノ用キック
+const SRS_KICKS_OTHERS = [
+  [[0,0], [-1,0], [-1,1], [0,-2], [-1,-2]],   // 0→R
+  [[0,0], [1,0], [1,-1], [0,2], [1,2]],       // R→2
+  [[0,0], [1,0], [1,1], [0,-2], [1,-2]],      // 2→L
+  [[0,0], [-1,0], [-1,-1], [0,2], [-1,2]]     // L→0
+];
+
+let currentMinoIndex = 0;  
+let currentRotation = 0;   
+
 
 let board = Array.from({length: ROWS}, () => Array(COLS).fill(0));
 let current, currentX, currentY, currentColor;
@@ -70,7 +118,6 @@ function draw() {
   if (GameOver) {
     ctx.fillText("GAME OVER", (COLS * BLOCK_SIZE) / 2, (ROWS * BLOCK_SIZE) / 2);
     document.getElementById('message').style.display = "flex";
-    draw();
   }
 }
 
@@ -99,6 +146,7 @@ function SRSRotate(shape, x, y, rotateFunc, kicks) {
   return { success: false, shape, x, y };
 }
 
+
 function merge() {
   for (let y = 0; y < current.length; y++) {
     for (let x = 0; x < current[y].length; x++) {
@@ -110,12 +158,28 @@ function merge() {
 }
 
 function rotate(shape) {
-  return shape[0].map((_,i) => shape.map(row => row[i])).reverse();
+  const N = shape.length;
+  let newShape = Array.from({length: N}, () => Array(N).fill(0));
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      newShape[x][N - 1 - y] = shape[y][x];
+    }
+  }
+  return newShape;
 }
 
 function rotateCCW(shape) {
-  return shape[0].map((_, i) => shape.map(row => row[row.length - 1 - i]));
+  const N = shape.length;
+  let newShape = Array.from({length: N}, () => Array(N).fill(0));
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      newShape[N - 1 - x][y] = shape[y][x];
+    }
+  }
+  return newShape;
 }
+
+
 
 function clearLines() {
   let linesCleared = 0;
@@ -180,34 +244,48 @@ function hardDrop() {
 }
 
 
-
 document.addEventListener('keydown', e => {
-  if (isPaused) return; 
+  if (isPaused) return;
+  if (GameOver) return;
+  let kicks = null;
+  if (currentMinoIndex === 0) kicks = SRS_KICKS_I;
+  else if (currentMinoIndex !== 1) kicks = SRS_KICKS_OTHERS;  // Oは回転なし
+
+  if (e.key === 'z') {  // 左回転
+    if (kicks) {
+      const result = SRSRotate(current, currentX, currentY, rotateCCW, kicks[currentRotation]);
+      if (result.success) {
+        current = result.shape;
+        currentX = result.x;
+        currentY = result.y;
+        currentRotation = (currentRotation + 3) % 4;  // 左回転は -1 mod 4
+      }
+    }
+  }
+
+  if (e.code === 'ArrowUp') {  // 右回転
+    if (kicks) {
+      const result = SRSRotate(current, currentX, currentY, rotate, kicks[currentRotation]);
+      if (result.success) {
+        current = result.shape;
+        currentX = result.x;
+        currentY = result.y;
+        currentRotation = (currentRotation + 1) % 4;
+        console.log(1)
+      }
+    }
+  }
+
   if (e.key === 'ArrowLeft' && !collision(currentX - 1, currentY, current)) currentX--;
   if (e.key === 'ArrowRight' && !collision(currentX + 1, currentY, current)) currentX++;
-  if (e.code === 'ArrowDown') drop();                
-  if (e.key === 'z') {//左
-  const result = SRSRotate(current, currentX, currentY, rotateCCW, SRS_KICKS);
-    if (result.success) {
-      current = result.shape;
-      currentX = result.x;
-      currentY = result.y;
-    }
-  }
-  if (e.key === 'ArrowUp') {//右
-    const result = SRSRotate(current, currentX, currentY, rotate, SRS_KICKS);
-    if (result.success) {
-      current = result.shape;
-      currentX = result.x;
-      currentY = result.y;
-    }
-  }
+  if (e.key === 'ArrowDown') drop();
   if (e.key === 'Shift') hold();
+  if (e.code === 'Space') hardDrop();
+
   draw();
-  if (e.code === 'Space') {
-    hardDrop();
-  }
 });
+
+
 
 function gameLoop() {
   if (!GameOver && !isPaused) {
@@ -231,7 +309,7 @@ function startGame() {
   score = 0;
   document.getElementById('score').textContent = "スコア: " + score; 
   if (gameInterval) {
-  clearInterval(gameInterval);
+    clearInterval(gameInterval);
   }
   gameInterval = setInterval(gameLoop, dropSpeed); 
   document.getElementById('message').style.display = "none";
@@ -239,7 +317,7 @@ function startGame() {
   stopGame();
 }
 
-document.getElementById('resetbtn').addEventListener('click', startGame);
+  document.getElementById('resetbtn').addEventListener('click', startGame);
 
 let GameOver = false;
 
@@ -260,25 +338,22 @@ function refillQueue() {
   minoQueue.push(...bag); 
 }
 
-
 function newTetromino() {
-
-  if(minoQueue.length === 0){
-    refillQueue();
-  }
-  const idx = minoQueue.shift();
-  current = mino[idx];
-  currentColor = COLORS[idx];
+  if (minoQueue.length === 0) refillQueue();
+  currentMinoIndex = minoQueue.shift();
+  current = mino[currentMinoIndex];
+  currentColor = COLORS[currentMinoIndex];
   currentX = 3;
   currentY = 0;
-  holdUsed = false; 
+  currentRotation = 0; 
+  holdUsed = false;
 
   if (collision(currentX, currentY, current)) {
     GameOver = true;
     draw();
   }
 }
-score
+
 let holdMino = null;
 let holdColor = null;
 let holdUsed = false;
