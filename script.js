@@ -49,7 +49,7 @@ function draw() {
       if (current[y][x]) drawBlock(currentX + x, currentY + y, currentColor);
     }
   }
-  ctx.strokeStyle = 'rgba(138, 138, 138, 1)'; 
+  ctx.strokeStyle = 'rgba(126, 126, 126, 1)'; 
   ctx.lineWidth = .7;
 
   for (let x = 0; x <= COLS; x++) {
@@ -128,7 +128,6 @@ function clearLines() {
       y++; 
     }
   }
-
   if (linesCleared > 0) {
     score += linesCleared * 100; 
     document.getElementById('score').textContent = score;
@@ -137,13 +136,11 @@ function clearLines() {
 }
 
 function checkClear() {
-  if (score >= 1000) {
+  if (score >= 4000) {
     clearInterval(gameInterval);
     document.getElementById('message2').style.display = "flex"; 
   }
-}
-
-
+}//クリア条件
 
 let isLocking = false; 
 
@@ -165,7 +162,7 @@ function drop() {
       }
       isLocking = false; 
       draw();
-      }, 1000); 
+      }, 1000); //1000
     }
   }
   draw(); 
@@ -185,11 +182,12 @@ function hardDrop() {
 
 
 document.addEventListener('keydown', e => {
+  if (isPaused) return; 
   if (e.key === 'ArrowLeft' && !collision(currentX - 1, currentY, current)) currentX--;
   if (e.key === 'ArrowRight' && !collision(currentX + 1, currentY, current)) currentX++;
   if (e.code === 'ArrowDown') drop();                
   if (e.key === 'z') {//左
-    const result = SRSRotate(current, currentX, currentY, rotateCCW, SRS_KICKS);
+  const result = SRSRotate(current, currentX, currentY, rotateCCW, SRS_KICKS);
     if (result.success) {
       current = result.shape;
       currentX = result.x;
@@ -212,13 +210,13 @@ document.addEventListener('keydown', e => {
 });
 
 function gameLoop() {
-  if (!GameOver) {
+  if (!GameOver && !isPaused) {
     drop();
   }
 }
 
 let gameInterval = null;
-const dropSpeed = 400; //速度
+const dropSpeed = 400; //速度 400
 
 function startGame() {
   board = Array.from({length: ROWS}, () => Array(COLS).fill(0));
@@ -229,15 +227,16 @@ function startGame() {
   minoQueue = [];
   newTetromino();
   draw();
+  isPaused = false;
   score = 0;
-  document.getElementById('score').textContent = score; 
+  document.getElementById('score').textContent = "スコア: " + score; 
   if (gameInterval) {
   clearInterval(gameInterval);
   }
   gameInterval = setInterval(gameLoop, dropSpeed); 
   document.getElementById('message').style.display = "none";
   document.getElementById('message2').style.display = "none";
-  
+  stopGame();
 }
 
 document.getElementById('resetbtn').addEventListener('click', startGame);
@@ -279,34 +278,34 @@ function newTetromino() {
     draw();
   }
 }
-
+score
 let holdMino = null;
 let holdColor = null;
 let holdUsed = false;
 
 function hold() {
- if (holdUsed) return;
- if (holdMino === null) {
-  holdMino = current;
-  holdColor = currentColor;
-  newTetromino();
- } else {
-  let tempMino = current;
-  let tempColor = currentColor;
-  current = holdMino;
-  currentColor = holdColor;
-  holdMino = tempMino;
-  holdColor = tempColor;
-  currentX = 3;
-  currentY = 0;
+  if (holdUsed) return;
+  if (holdMino === null) {
+    holdMino = current;
+    holdColor = currentColor;
+    newTetromino();
+  } else {
+    let tempMino = current;
+    let tempColor = currentColor;
+    current = holdMino;
+    currentColor = holdColor;
+    holdMino = tempMino;
+    holdColor = tempColor;
+    currentX = 3;
+    currentY = 0;
 
-  if (collision(currentX, currentY, current)) {
-    GameOver = true;
-    clearInterval(gameInterval);
-    draw();
-    drawHold();
-    return;
-    }
+    if (collision(currentX, currentY, current)) {
+      GameOver = true;
+      clearInterval(gameInterval);
+      draw();
+      drawHold();
+      return;
+      }
  }
 
  holdUsed = true;
@@ -325,6 +324,42 @@ function drawHold() {
   }
  }
 }
+
+let isPaused = false;
+
+function stopGame(){
+  if (gameInterval) {
+    clearInterval(gameInterval);
+    gameInterval = null;
+    isPaused = true;
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,0.6)";
+    ctx.fillRect(0, 0, COLS * BLOCK_SIZE, ROWS * BLOCK_SIZE);
+    ctx.fillStyle = "white";
+    ctx.font = "bold 28px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("停止中", (COLS * BLOCK_SIZE) / 2, (ROWS * BLOCK_SIZE) / 2);
+    ctx.restore();
+  }
+}
+
+function restartGame(){
+  if (!gameInterval && isPaused && !GameOver) {
+    gameInterval = setInterval(gameLoop, dropSpeed);
+    isPaused = false;
+    draw();
+  };
+}
+
+function gameLoop() {
+  if (!GameOver && !isPaused) { 
+    drop();
+  }
+}
+
+document.getElementById('stopbtn').addEventListener('click' ,stopGame);
+document.getElementById('startbtn').addEventListener('click' ,restartGame);
+
 
 startGame();
 
