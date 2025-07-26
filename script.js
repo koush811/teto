@@ -7,7 +7,6 @@ const BLOCK_SIZE = 24;
 canvas.height = ROWS * BLOCK_SIZE;
 canvas.width = (COLS + 6) * BLOCK_SIZE;
 
-//ミノ
 const mino = [
   // Iミノ
   [
@@ -199,10 +198,13 @@ function clearLines() {
   }
 }
 
+let isCleared = false; 
+
 function checkClear() {
-  if (score >= 4000) {
+  if (score >= 4000) { //4000
     clearInterval(gameInterval);
     document.getElementById('message2').style.display = "flex"; 
+    isCleared = true;
   }
 }//クリア条件
 
@@ -247,6 +249,7 @@ function hardDrop() {
 document.addEventListener('keydown', e => {
   if (isPaused) return;
   if (GameOver) return;
+  if (isCleared) return;
   let kicks = null;
   if (currentMinoIndex === 0) kicks = SRS_KICKS_I;
   else if (currentMinoIndex !== 1) kicks = SRS_KICKS_OTHERS;  // Oは回転なし
@@ -413,7 +416,7 @@ function stopGame(){
     ctx.fillStyle = "white";
     ctx.font = "bold 28px sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("停止中", (COLS * BLOCK_SIZE) / 2, (ROWS * BLOCK_SIZE) / 2);
+    ctx.fillText("停止中", (COLS * BLOCK_SIZE) /2, (ROWS * BLOCK_SIZE) /2);
     ctx.restore();
   }
 }

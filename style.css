@@ -29,6 +29,7 @@ canvas{
   background-color: white;
 }
 
+
 #message{
   position: absolute;
   z-index: 10;
