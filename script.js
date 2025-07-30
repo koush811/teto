@@ -457,7 +457,10 @@ function hold() {
 
 function drawHold() {
   ctx.strokeStyle = 'white';
+  ctx.fillStyle = 'white';
   ctx.strokeRect((COLS + 1) * BLOCK_SIZE, BLOCK_SIZE, 4 * BLOCK_SIZE, 4 * BLOCK_SIZE);
+  ctx.fillText('HOLD', (COLS + 3) * BLOCK_SIZE, BLOCK_SIZE -8 , 4 * BLOCK_SIZE, 4 * BLOCK_SIZE);
+
   if (holdMinoIndex === null) return;  
 
   const holdShape = mino[holdMinoIndex];              
@@ -511,7 +514,7 @@ let nextMinoIndex = null;
 let nextMinoShape = null;
 let nextMinoColor = null;
 
-function drawNext() {///
+function drawNext() {
   const offsetX = (COLS + 1) * BLOCK_SIZE;
   const offsetY = BLOCK_SIZE + 8 * BLOCK_SIZE + 10; 
   ctx.strokeRect(offsetX, offsetY, 4 * BLOCK_SIZE, 4 * BLOCK_SIZE);
@@ -527,10 +530,8 @@ function drawNext() {///
     for (let x = 0; x < nextMinoShape[y].length; x++) {
       if (nextMinoShape[y][x]) {
         ctx.fillStyle = nextMinoColor;
-        ctx.fillRect(offsetX + x * BLOCK_SIZE, offsetY + y * BLOCK_SIZE, BLOCK_SIZE - 1, BLOCK_SIZE - 1);
-        
+        ctx.fillRect(offsetX + x * BLOCK_SIZE, offsetY + y * BLOCK_SIZE, BLOCK_SIZE - 1, BLOCK_SIZE - 1); 
       }
-      
     }
   }
 }
