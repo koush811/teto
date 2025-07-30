@@ -116,6 +116,7 @@ function draw() {
   drawHold();
 
   if (GameOver) {
+    stopTimer();
     document.getElementById('message').style.display = "flex";
   }
 }
@@ -229,6 +230,7 @@ function checkClear() {
     clearInterval(gameInterval);
     document.getElementById('message2').style.display = "flex"; 
     isCleared = true;
+    stopTimer();
   }
 }//クリア条件
 
@@ -371,8 +373,8 @@ let dropSpeed = 400;
 document.getElementById('dropspeed').addEventListener('input', function(){
   dropSpeed = Number(this.value) || 400;
 });
-
 function startGame() {
+  startTimer();
   board = Array.from({length: ROWS}, () => Array(COLS).fill(0));
   holdMino = null;
   holdColor = null;
@@ -439,6 +441,7 @@ function newTetromino() {
 
     if (collision(currentX, currentY, current)) {
         clearInterval(gameInterval);
+        stopTimer();
         GameOver = true;
         draw();
       }
@@ -577,7 +580,30 @@ function drawNext() {
   }
 }
 
+let startTime = null;
+let timerInterval = null;
 
+function startTimer() {
+  startTime = Date.now();
+  timerInterval = setInterval(updateTimer, 100); 
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+}
+
+function getElapsedTime() {
+  if (!startTime) return 0;
+  return Math.floor((Date.now() - startTime) / 1000); // 経過秒数
+}
+
+function updateTimer() {
+  const elapsed = getElapsedTime();
+  const min = String(Math.floor(elapsed / 60)).padStart(2, '0');
+  const sec = String(elapsed % 60).padStart(2, '0');
+  document.getElementById('timer').textContent = `${min}:${sec}`;
+}
 
 startGame();
 
