@@ -25,6 +25,7 @@ canvas{
   position: absolute;
   display: flex;
   justify-content: space-between;
+  align-items: center;
   width: 50%;
   top: 90%;
   padding: 15px;
@@ -32,6 +33,17 @@ canvas{
   background-color: white;
 }
 
+.click{
+  display: flex;
+  justify-content: space-between;
+  width: 30%;
+}
+
+.click div{
+  border: solid black 1px;
+  padding: 5px;
+  border-radius: 5px;
+}
 
 #message{
   position: absolute;
@@ -71,4 +83,9 @@ canvas{
   position: absolute;
   top: 12%;
   color: white;
+}
+input{
+  border:solid black 1px;
+  padding: 3px;
+  border-radius: 5px;
 }
