@@ -398,6 +398,7 @@ function newTetromino() {
     nextMinoColor = COLORS[nextMinoIndex];
 
     if (collision(currentX, currentY, current)) {
+        clearInterval(gameInterval);
         GameOver = true;
         draw();
       }
