@@ -392,7 +392,11 @@ document.getElementById('speed').addEventListener('input', function(){
 });
 
 function startGame() {
-  startTimer();
+  
+  pauseElapsed = 0;
+  startTimestamp = Date.now();
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(updateTimer, 100);
   board = Array.from({length: ROWS}, () => Array(COLS).fill(0));
   holdMino = null;
   holdColor = null;
@@ -600,29 +604,37 @@ function drawNext() {
   }
 }
 
-let startTime = null;
+
+let startTimestamp = null;
+let pauseElapsed = 0;
 let timerInterval = null;
 
 function startTimer() {
-  startTime = Date.now();
-  timerInterval = setInterval(updateTimer, 100); 
+  startTimestamp = Date.now();
+  timerInterval = setInterval(updateTimer, 100);
 }
 
 function stopTimer() {
-  clearInterval(timerInterval);
-  timerInterval = null;
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  if (startTimestamp) {
+    pauseElapsed += Date.now() - startTimestamp;
+  }
+  startTimestamp = null;
 }
 
 function getElapsedTime() {
-  if (!startTime) return 0;
-  return Math.floor((Date.now() - startTime) / 1000); // 経過秒数
+  if (!startTimestamp) return Math.floor(pauseElapsed / 1000);
+  return Math.floor((pauseElapsed + (Date.now() - startTimestamp)) / 1000);
 }
 
 function updateTimer() {
   const elapsed = getElapsedTime();
   const min = String(Math.floor(elapsed / 60)).padStart(2, '0');
   const sec = String(elapsed % 60).padStart(2, '0');
-  document.getElementById('timer').textContent = `${min}:${sec}`;
+  document.getElementById('timer').textContent = `経過時間：${min}:${sec}`;
 }
 
 startGame();
