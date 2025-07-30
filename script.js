@@ -289,53 +289,74 @@ function hardDrop() {
 }
 
 
+let prevX, prevY, prevRotation;
+
 document.addEventListener('keydown', e => {
   if (isPaused) return;
   if (GameOver) return;
   if (isCleared) return;
   let kicks = null;
   if (currentMinoIndex === 0) kicks = SRS_KICKS_I;
-  else if (currentMinoIndex !== 1) kicks = SRS_KICKS_OTHERS;  // Oは回転なし
+  else if (currentMinoIndex !== 1) kicks = SRS_KICKS_OTHERS;
+  prevX = currentX;
+  prevY = currentY;
+  prevRotation = currentRotation;
+
+  let moved = false;
 
   if (e.key === 'z') {  // 左回転
-  if (kicks) {
-    const result = SRSRotate(
-      current, currentX, currentY,
-      shape => rotateCCW(shape, currentMinoIndex), kicks[currentRotation]
-    );
-    if (result.success) {
-      current = result.shape;
-      currentX = result.x;
-      currentY = result.y;
-      currentRotation = (currentRotation + 3) % 4;
+    if (kicks) {
+      const result = SRSRotate(
+        current, currentX, currentY,
+        shape => rotateCCW(shape, currentMinoIndex), kicks[currentRotation]
+      );
+      if (result.success) {
+        current = result.shape;
+        currentX = result.x;
+        currentY = result.y;
+        currentRotation = (currentRotation + 3) % 4;
+        moved = true;
+      }
     }
   }
-}
 
-if (e.code === 'ArrowUp') {  // 右回転
-  if (kicks) {
-    const result = SRSRotate(
-      current, currentX, currentY,
-      shape => rotate(shape, currentMinoIndex), kicks[currentRotation]
-    );
-    if (result.success) {
-      current = result.shape;
-      currentX = result.x;
-      currentY = result.y;
-      currentRotation = (currentRotation + 1) % 4;
+  if (e.code === 'ArrowUp') {  // 右回転
+    if (kicks) {
+      const result = SRSRotate(
+        current, currentX, currentY,
+        shape => rotate(shape, currentMinoIndex), kicks[currentRotation]
+      );
+      if (result.success) {
+        current = result.shape;
+        currentX = result.x;
+        currentY = result.y;
+        currentRotation = (currentRotation + 1) % 4;
+        moved = true;
+      }
     }
   }
-}
 
-  if (e.key === 'ArrowLeft' && !collision(currentX - 1, currentY, current)) currentX--;
-  if (e.key === 'ArrowRight' && !collision(currentX + 1, currentY, current)) currentX++;
+  if (e.key === 'ArrowLeft' && !collision(currentX - 1, currentY, current)) {
+    currentX--;
+    moved = true;
+  }
+  if (e.key === 'ArrowRight' && !collision(currentX + 1, currentY, current)) {
+    currentX++;
+    moved = true;
+  }
   if (e.key === 'ArrowDown') drop();
   if (e.key === 'Shift') hold();
   if (e.code === 'Space') hardDrop();
+  if (moved) {
+    if (isLocking && collision(currentX, currentY + 1, current)) {
+      clearTimeout(lockTimer);
+      lockTimer = null;
+      isLocking = false;
+    }
+  }
 
   draw();
 });
-
 
 
 function gameLoop() {
