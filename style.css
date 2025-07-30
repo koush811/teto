@@ -9,7 +9,7 @@ body {
   justify-content: center;
   align-items: center;
   height: 100vh;
-    }
+}
 #gameCanvas {
   background: #000;
   display: block;
@@ -23,7 +23,10 @@ canvas{
 
 .btn{
   position: absolute;
-  top: 80%;
+  display: flex;
+  justify-content: space-between;
+  width: 20%;
+  top: 90%;
   padding: 15px;
   border-radius: 10px;
   background-color: white;
@@ -60,6 +63,6 @@ canvas{
   display: flex;
   justify-content: center;
   align-items: center;
-  top: 10%;
+  top: 2%;
   font-size: 300%;
 }

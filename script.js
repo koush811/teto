@@ -112,10 +112,10 @@ function draw() {
     ctx.lineTo(COLS * BLOCK_SIZE, y * BLOCK_SIZE);
     ctx.stroke();
   }
+  drawNext();
   drawHold();
 
   if (GameOver) {
-    ctx.fillText("GAME OVER", (COLS * BLOCK_SIZE) / 2, (ROWS * BLOCK_SIZE) / 2);
     document.getElementById('message').style.display = "flex";
   }
 }
@@ -153,29 +153,53 @@ function merge() {
     }
   }
   score += 10;
-  document.getElementById('score').textContent = score;
+  document.getElementById('score').textContent = "スコア：" + score;
 }
 
-function rotate(shape) {
-  const N = shape.length;
-  let newShape = Array.from({length: N}, () => Array(N).fill(0));
-  for (let y = 0; y < N; y++) {
-    for (let x = 0; x < N; x++) {
-      newShape[x][N - 1 - y] = shape[y][x];
+
+function rotateByCenter(shape, cx, cy, isCCW = false) {
+    const N = shape.length;
+    let newShape = Array.from({length: N}, () => Array(N).fill(0));
+    for (let y = 0; y < N; y++) {
+        for (let x = 0; x < N; x++) {
+            if (!shape[y][x]) continue;
+            // 中心補正: Iミノだけ Math.floor, 他は Math.round
+            let dx = x - cx;
+            let dy = y - cy;
+            let rx, ry;
+            if (!isCCW) {
+                rx = dy;
+                ry = -dx;
+            } else {
+                rx = -dy;
+                ry = dx;
+            }
+            let nx, ny;
+            if (N === 4) { // Iミノ
+                nx = Math.floor(cx + rx + 0.01);
+                ny = Math.floor(cy + ry + 0.01);
+            } else {
+                nx = Math.round(cx + rx);
+                ny = Math.round(cy + ry);
+            }
+            if (ny >= 0 && ny < N && nx >= 0 && nx < N) {
+                newShape[ny][nx] = shape[y][x];
+            }
+        }
     }
-  }
-  return newShape;
+    return newShape;
 }
 
-function rotateCCW(shape) {
-  const N = shape.length;
-  let newShape = Array.from({length: N}, () => Array(N).fill(0));
-  for (let y = 0; y < N; y++) {
-    for (let x = 0; x < N; x++) {
-      newShape[N - 1 - x][y] = shape[y][x];
-    }
-  }
-  return newShape;
+function rotate(shape, minoIndex) {
+  if (minoIndex === 0) return rotateByCenter(shape, 1.5, 1.5, false); // Iミノ
+  if (minoIndex === 1) return shape.map(row => row.slice()); // Oミノ（回転なし）
+  return rotateByCenter(shape, 1, 1, false); // 他
+}
+
+function rotateCCW(shape, minoIndex) {
+  if (minoIndex === 0) return rotateByCenter(shape, 1.5, 1.5, true);
+  if (minoIndex === 1) return shape.map(row => row.slice());
+  return rotateByCenter(shape, 1, 1, true);
 }
 
 
@@ -193,7 +217,7 @@ function clearLines() {
   }
   if (linesCleared > 0) {
     score += linesCleared * 100; 
-    document.getElementById('score').textContent = score;
+    document.getElementById('score').textContent = "スコア：" + score;
     checkClear(); 
   }
 }
@@ -217,18 +241,18 @@ function drop() {
  } else {
   if (!isLocking) {
     isLocking = true;
-  setTimeout(() => {
-      if (collision(currentX, currentY + 1, current)) {
-        merge();
-        clearLines();
-        newTetromino();
-      if (collision(currentX, currentY, current)) {
-        board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-        }
-      }
-      isLocking = false; 
-      draw();
-      }, 1000); //1000
+      setTimeout(() => {
+          if (collision(currentX, currentY + 1, current)) {
+            merge();
+            clearLines();
+            newTetromino();
+          if (collision(currentX, currentY, current)) {
+            board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+            }
+          }
+          isLocking = false; 
+          draw();
+          }, 1000); //1000
     }
   }
   draw(); 
@@ -255,29 +279,34 @@ document.addEventListener('keydown', e => {
   else if (currentMinoIndex !== 1) kicks = SRS_KICKS_OTHERS;  // Oは回転なし
 
   if (e.key === 'z') {  // 左回転
-    if (kicks) {
-      const result = SRSRotate(current, currentX, currentY, rotateCCW, kicks[currentRotation]);
-      if (result.success) {
-        current = result.shape;
-        currentX = result.x;
-        currentY = result.y;
-        currentRotation = (currentRotation + 3) % 4;  // 左回転は -1 mod 4
-      }
+  if (kicks) {
+    const result = SRSRotate(
+      current, currentX, currentY,
+      shape => rotateCCW(shape, currentMinoIndex), kicks[currentRotation]
+    );
+    if (result.success) {
+      current = result.shape;
+      currentX = result.x;
+      currentY = result.y;
+      currentRotation = (currentRotation + 3) % 4;
     }
   }
+}
 
-  if (e.code === 'ArrowUp') {  // 右回転
-    if (kicks) {
-      const result = SRSRotate(current, currentX, currentY, rotate, kicks[currentRotation]);
-      if (result.success) {
-        current = result.shape;
-        currentX = result.x;
-        currentY = result.y;
-        currentRotation = (currentRotation + 1) % 4;
-        console.log(1)
-      }
+if (e.code === 'ArrowUp') {  // 右回転
+  if (kicks) {
+    const result = SRSRotate(
+      current, currentX, currentY,
+      shape => rotate(shape, currentMinoIndex), kicks[currentRotation]
+    );
+    if (result.success) {
+      current = result.shape;
+      currentX = result.x;
+      currentY = result.y;
+      currentRotation = (currentRotation + 1) % 4;
     }
   }
+}
 
   if (e.key === 'ArrowLeft' && !collision(currentX - 1, currentY, current)) currentX--;
   if (e.key === 'ArrowRight' && !collision(currentX + 1, currentY, current)) currentX++;
@@ -297,20 +326,26 @@ function gameLoop() {
 }
 
 let gameInterval = null;
-const dropSpeed = 400; //速度 400
+let dropSpeed = 400;
+
+document.getElementById('dropspeed').addEventListener('input', function(){
+  dropSpeed = Number(this.value) || 400;
+});
 
 function startGame() {
   board = Array.from({length: ROWS}, () => Array(COLS).fill(0));
   holdMino = null;
   holdColor = null;
+  holdMinoIndex = null;
   holdUsed = false;
+  holdRotation = 0;
   GameOver = false;
   minoQueue = [];
   newTetromino();
   draw();
   isPaused = false;
   score = 0;
-  document.getElementById('score').textContent = "スコア: " + score; 
+  document.getElementById('score').textContent = "スコア： " + score; 
   if (gameInterval) {
     clearInterval(gameInterval);
   }
@@ -318,6 +353,7 @@ function startGame() {
   document.getElementById('message').style.display = "none";
   document.getElementById('message2').style.display = "none";
   stopGame();
+  isCleared = false;
 }
 
   document.getElementById('resetbtn').addEventListener('click', startGame);
@@ -342,38 +378,68 @@ function refillQueue() {
 }
 
 function newTetromino() {
-  if (minoQueue.length === 0) refillQueue();
-  currentMinoIndex = minoQueue.shift();
-  current = mino[currentMinoIndex];
-  currentColor = COLORS[currentMinoIndex];
-  currentX = 3;
-  currentY = 0;
-  currentRotation = 0; 
-  holdUsed = false;
+    
+    if (minoQueue.length === 0) {
+      refillQueue();
+    }
+    currentMinoIndex = minoQueue.shift();
+    current = mino[currentMinoIndex];
+    currentColor = COLORS[currentMinoIndex];
+    currentX = 3;
+    currentY = 0;
+    currentRotation = 0;
+    holdUsed = false;
+    
+    if (minoQueue.length === 0) {
+      refillQueue();
+    }
+    nextMinoIndex = minoQueue[0]; 
+    nextMinoShape = mino[nextMinoIndex];
+    nextMinoColor = COLORS[nextMinoIndex];
 
-  if (collision(currentX, currentY, current)) {
-    GameOver = true;
-    draw();
-  }
+    if (collision(currentX, currentY, current)) {
+        GameOver = true;
+        draw();
+      }
+    }
+
+
+function nextmino(){
+   
 }
 
 let holdMino = null;
 let holdColor = null;
 let holdUsed = false;
 
+let holdRotation = 0; // ホールド時の回転状態も保存する変数を用意
+
+let holdMinoIndex = null; // ホールドしたミノの種類番号も保存
+
 function hold() {
   if (holdUsed) return;
   if (holdMino === null) {
     holdMino = current;
     holdColor = currentColor;
+    holdMinoIndex = currentMinoIndex;    
+    holdRotation = currentRotation;
     newTetromino();
   } else {
     let tempMino = current;
     let tempColor = currentColor;
+    let tempRotation = currentRotation;
+    let tempMinoIndex = currentMinoIndex;  
+
     current = holdMino;
     currentColor = holdColor;
+    currentMinoIndex = holdMinoIndex;          
+    currentRotation = holdRotation;
+
     holdMino = tempMino;
     holdColor = tempColor;
+    holdRotation = tempRotation;
+    holdMinoIndex = tempMinoIndex;          
+
     currentX = 3;
     currentY = 0;
 
@@ -383,24 +449,27 @@ function hold() {
       draw();
       drawHold();
       return;
-      }
- }
-
- holdUsed = true;
- draw();
+    }
+  }
+  holdUsed = true;
+  draw();
 }
 
 function drawHold() {
   ctx.strokeStyle = 'white';
   ctx.strokeRect((COLS + 1) * BLOCK_SIZE, BLOCK_SIZE, 4 * BLOCK_SIZE, 4 * BLOCK_SIZE);
-  if (!holdMino) return;
-  for (let y = 0; y < holdMino.length; y++) {
-  for (let x = 0; x < holdMino[y].length; x++) {
-   if (holdMino[y][x]) {
-    drawBlock(x + COLS + 1, y + 1, holdColor); 
-   }
+  if (holdMinoIndex === null) return;  
+
+  const holdShape = mino[holdMinoIndex];              
+  const holdColorLocal = COLORS[holdMinoIndex];
+
+  for (let y = 0; y < holdShape.length; y++) {
+    for (let x = 0; x < holdShape[y].length; x++) {
+     if (holdShape[y][x]) {
+       drawBlock(x + COLS + 1, y + 1, holdColorLocal);
+     }
+    }
   }
- }
 }
 
 let isPaused = false;
@@ -437,6 +506,35 @@ function gameLoop() {
 
 document.getElementById('stopbtn').addEventListener('click' ,stopGame);
 document.getElementById('startbtn').addEventListener('click' ,restartGame);
+
+let nextMinoIndex = null;
+let nextMinoShape = null;
+let nextMinoColor = null;
+
+function drawNext() {///
+  const offsetX = (COLS + 1) * BLOCK_SIZE;
+  const offsetY = BLOCK_SIZE + 8 * BLOCK_SIZE + 10; 
+  ctx.strokeRect(offsetX, offsetY, 4 * BLOCK_SIZE, 4 * BLOCK_SIZE);
+  ctx.strokeStyle = 'white';
+  ctx.font = "bold 14px sans-serif";
+  ctx.fillStyle = 'white';
+  ctx.textAlign = "center";
+  ctx.fillText('NEXT', offsetX + 2 * BLOCK_SIZE, offsetY - 5);
+
+  if (!nextMinoShape) return;
+
+  for (let y = 0; y < nextMinoShape.length; y++) {
+    for (let x = 0; x < nextMinoShape[y].length; x++) {
+      if (nextMinoShape[y][x]) {
+        ctx.fillStyle = nextMinoColor;
+        ctx.fillRect(offsetX + x * BLOCK_SIZE, offsetY + y * BLOCK_SIZE, BLOCK_SIZE - 1, BLOCK_SIZE - 1);
+        
+      }
+      
+    }
+  }
+}
+
 
 
 startGame();
