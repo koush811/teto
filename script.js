@@ -232,31 +232,50 @@ function checkClear() {
   }
 }//クリア条件
 
-let isLocking = false; 
+let isLocking = false;
+let lockTimer = null;
 
 function drop() {
- if (!collision(currentX, currentY + 1, current)) {
-  currentY++;
-  isLocking = false; 
- } else {
-  if (!isLocking) {
-    isLocking = true;
-      setTimeout(() => {
-          if (collision(currentX, currentY + 1, current)) {
-            merge();
-            clearLines();
-            newTetromino();
+  if (!collision(currentX, currentY + 1, current)) {
+    currentY++;
+    if (isLocking) {
+      isLocking = false;
+      if (lockTimer) {
+        clearTimeout(lockTimer);
+        lockTimer = null;
+      }
+    }
+  } else {
+    if (!isLocking) {
+      isLocking = true;
+      lockTimer = setTimeout(() => {
+        if (collision(currentX, currentY + 1, current)) {
+          merge();
+          clearLines();
+          newTetromino();
           if (collision(currentX, currentY, current)) {
             board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-            }
           }
-          isLocking = false; 
-          draw();
-          }, 1000); //1000
+        }
+        isLocking = false;
+        lockTimer = null;
+        draw();
+      }, 1000);
     }
   }
-  draw(); 
+  draw();
 }
+
+function cancelLockIfOnGround() {
+  if (isLocking && collision(currentX, currentY + 1, current)) {
+    clearTimeout(lockTimer);
+    lockTimer = null;
+    isLocking = false;
+  }
+}
+
+// keydown（左右移動・回転系）で移動・回転できた場合に呼ぶ
+
 
 function hardDrop() {
   while (!collision(currentX, currentY + 1, current)) {
