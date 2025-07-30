@@ -223,10 +223,27 @@ function clearLines() {
   }
 }
 
-let isCleared = false; 
+let isCleared = false;
+
+
+
+let maxscore = 4000;
+
+const maxscoreInput = document.getElementById('maxscore');
+
+maxscoreInput.addEventListener('input', function() {
+  const val = Number(this.value);
+  if (!isNaN(val) && val > 0) {
+    maxscore = val;
+  } else {
+    maxscore = 4000; 
+  }
+});
+  
+
 
 function checkClear() {
-  if (score >= 10000) { //4000
+  if (score >= maxscore) { //4000
     clearInterval(gameInterval);
     document.getElementById('message2').style.display = "flex"; 
     isCleared = true;
@@ -370,9 +387,10 @@ function gameLoop() {
 let gameInterval = null;
 let dropSpeed = 400;
 
-document.getElementById('dropspeed').addEventListener('input', function(){
+document.getElementById('speed').addEventListener('input', function(){
   dropSpeed = Number(this.value) || 400;
 });
+
 function startGame() {
   startTimer();
   board = Array.from({length: ROWS}, () => Array(COLS).fill(0));

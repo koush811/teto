@@ -10,15 +10,14 @@
   <div id="message">GAME OVER</div>
   <div id="message2">CONGRATULATIONS!</div>
   <div id="score"></div>
-  <div id="timer" style="font-size:30px;font-family:sans-serif;">00:00</div>
+  <div id="timer" style="font-size:px;font-family:sans-serif;">00:00</div>
   <canvas id="gameCanvas" width="240" height="480"></canvas>
   <div class="btn">
     <div id="resetbtn">リセット</div>
     <div id="stopbtn">一時停止</div>
     <div id="startbtn">スタート</div>
-    <label>
-    <input id="dropspeed" type="range" min="50" max="1000" value="400">
-    </label>
+    <input type="number" id="speed" value="400" >
+    <input type="number" id="maxscore" value="4000" >
   </div>
   <script src="script.js"></script>
 </body>
