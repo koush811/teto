@@ -543,6 +543,7 @@ function restartGame(){
     gameInterval = setInterval(gameLoop, dropSpeed);
     isPaused = false;
     draw();
+    startTimer();
   };
 }
 
