@@ -225,7 +225,7 @@ function clearLines() {
 let isCleared = false; 
 
 function checkClear() {
-  if (score >= 4000) { //4000
+  if (score >= 10000) { //4000
     clearInterval(gameInterval);
     document.getElementById('message2').style.display = "flex"; 
     isCleared = true;
