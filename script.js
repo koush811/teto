@@ -526,6 +526,7 @@ function stopGame(){
     clearInterval(gameInterval);
     gameInterval = null;
     isPaused = true;
+    stopTimer();
     ctx.save();
     ctx.fillStyle = "rgba(0,0,0,0.6)";
     ctx.fillRect(0, 0, COLS * BLOCK_SIZE, ROWS * BLOCK_SIZE);
