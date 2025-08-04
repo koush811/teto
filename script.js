@@ -4,8 +4,9 @@ const COLS = 10;
 const ROWS = 20;
 const BLOCK_SIZE = 24;
 
+const LEFT_HOLD_WIDTH = 6; 
+canvas.width = (LEFT_HOLD_WIDTH + COLS + 6) * BLOCK_SIZE;
 canvas.height = ROWS * BLOCK_SIZE;
-canvas.width = (COLS + 6) * BLOCK_SIZE;
 
 const mino = [
   // Iミノ
@@ -81,7 +82,7 @@ let current, currentX, currentY, currentColor;
 
 function drawBlock(x, y, color) {
   ctx.fillStyle = color;
-  ctx.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE-1, BLOCK_SIZE-1);
+  ctx.fillRect((LEFT_HOLD_WIDTH + x) * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE - 1, BLOCK_SIZE - 1);
 }
 
 function draw() {
@@ -100,18 +101,19 @@ function draw() {
   ctx.lineWidth = .7;
 
   for (let x = 0; x <= COLS; x++) {
-    ctx.beginPath();
-    ctx.moveTo(x * BLOCK_SIZE, 0);
-    ctx.lineTo(x * BLOCK_SIZE, ROWS * BLOCK_SIZE);
-    ctx.stroke();
-  }
+  ctx.beginPath();
+  ctx.moveTo((LEFT_HOLD_WIDTH + x) * BLOCK_SIZE, 0);
+  ctx.lineTo((LEFT_HOLD_WIDTH + x) * BLOCK_SIZE, ROWS * BLOCK_SIZE);
+  ctx.stroke();
+}
 
-  for (let y = 0; y <= ROWS; y++) {
-    ctx.beginPath();
-    ctx.moveTo(0, y * BLOCK_SIZE);
-    ctx.lineTo(COLS * BLOCK_SIZE, y * BLOCK_SIZE);
-    ctx.stroke();
-  }
+// 縦線
+for (let y = 0; y <= ROWS; y++) {
+  ctx.beginPath();
+  ctx.moveTo(LEFT_HOLD_WIDTH * BLOCK_SIZE, y * BLOCK_SIZE);
+  ctx.lineTo((LEFT_HOLD_WIDTH + COLS) * BLOCK_SIZE, y * BLOCK_SIZE);
+  ctx.stroke();
+}
   drawNext();
   drawHold();
 
@@ -146,7 +148,6 @@ function SRSRotate(shape, x, y, rotateFunc, kicks) {
   return { success: false, shape, x, y };
 }
 
-
 function merge() {
   for (let y = 0; y < current.length; y++) {
     for (let x = 0; x < current[y].length; x++) {
@@ -156,7 +157,6 @@ function merge() {
   score += 10;
   document.getElementById('score').textContent = "スコア：" + score;
 }
-
 
 function rotateByCenter(shape, cx, cy, isCCW = false) {
     const N = shape.length;
@@ -392,7 +392,7 @@ document.getElementById('speed').addEventListener('input', function(){
 });
 
 function startGame() {
-  
+
   pauseElapsed = 0;
   startTimestamp = Date.now();
   if (timerInterval) clearInterval(timerInterval);
@@ -522,27 +522,36 @@ function hold() {
 }
 
 function drawHold() {
-  ctx.strokeStyle = 'white';
-  ctx.fillStyle = 'white';
-  ctx.strokeRect((COLS + 1) * BLOCK_SIZE, BLOCK_SIZE, 4 * BLOCK_SIZE, 4 * BLOCK_SIZE);
-  ctx.fillText('HOLD', (COLS + 3) * BLOCK_SIZE, BLOCK_SIZE -8 , 4 * BLOCK_SIZE, 4 * BLOCK_SIZE);
+    const holdX = 1 * BLOCK_SIZE;
+    const holdY = 2 * BLOCK_SIZE;
+    ctx.strokeStyle = 'white';
+    ctx.fillStyle = 'white';
+    ctx.strokeRect(holdX, holdY, 4 * BLOCK_SIZE, 4 * BLOCK_SIZE);
+    ctx.font = "bold 14px sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText('HOLD', holdX + 4, holdY - 8);
 
-  if (holdMinoIndex === null) return;  
+    if (holdMinoIndex === null) return; 
 
-  const holdShape = mino[holdMinoIndex];              
-  const holdColorLocal = COLORS[holdMinoIndex];
+    const holdShape = mino[holdMinoIndex];
+    const holdColorLocal = COLORS[holdMinoIndex];
 
-  for (let y = 0; y < holdShape.length; y++) {
-    for (let x = 0; x < holdShape[y].length; x++) {
-     if (holdShape[y][x]) {
-       drawBlock(x + COLS + 1, y + 1, holdColorLocal);
-     }
+    for (let y = 0; y < holdShape.length; y++) {
+        for (let x = 0; x < holdShape[y].length; x++) {
+            if (holdShape[y][x]) {
+                ctx.fillStyle = holdColorLocal;
+                ctx.fillRect(
+                    holdX + (x + 1) * BLOCK_SIZE,
+                    holdY + (y + 1) * BLOCK_SIZE,
+                    BLOCK_SIZE - 1,
+                    BLOCK_SIZE - 1
+                );
+            }
+        }
     }
-  }
 }
 
 let isPaused = false;
-
 function stopGame(){
   if (gameInterval) {
     clearInterval(gameInterval);
@@ -551,11 +560,11 @@ function stopGame(){
     stopTimer();
     ctx.save();
     ctx.fillStyle = "rgba(0,0,0,0.6)";
-    ctx.fillRect(0, 0, COLS * BLOCK_SIZE, ROWS * BLOCK_SIZE);
+    ctx.fillRect(0, 0, COLS + 100* BLOCK_SIZE, ROWS * BLOCK_SIZE);
     ctx.fillStyle = "white";
     ctx.font = "bold 28px sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("停止中", (COLS * BLOCK_SIZE) /2, (ROWS * BLOCK_SIZE) /2);
+    ctx.fillText("停止中", (COLS  * BLOCK_SIZE), (ROWS * BLOCK_SIZE) /2);
     ctx.restore();
   }
 }
@@ -583,8 +592,8 @@ let nextMinoShape = null;
 let nextMinoColor = null;
 
 function drawNext() {
-  const offsetX = (COLS + 1) * BLOCK_SIZE;
-  const offsetY = BLOCK_SIZE + 8 * BLOCK_SIZE + 10; 
+  const offsetX = (COLS + 7) * BLOCK_SIZE;
+  const offsetY = BLOCK_SIZE +1 * BLOCK_SIZE + 10; 
   ctx.strokeRect(offsetX, offsetY, 4 * BLOCK_SIZE, 4 * BLOCK_SIZE);
   ctx.strokeStyle = 'white';
   ctx.font = "bold 14px sans-serif";
@@ -638,4 +647,3 @@ function updateTimer() {
 }
 
 startGame();
-

@@ -12,13 +12,14 @@ body {
 }
 #gameCanvas {
   background: #000;
-  display: block;
   margin: auto;
   box-shadow: 0 0 20px rgb(255, 255, 255);
 }
 
 canvas{
   border: solid white 1px;
+  display: flex;
+  justify-content: center;
 }  
 
 .btn{
@@ -26,7 +27,7 @@ canvas{
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 50%;
+  width: 60%;
   top: 90%;
   padding: 15px;
   border-radius: 10px;
@@ -75,17 +76,22 @@ canvas{
   display: flex;
   justify-content: center;
   align-items: center;
-  top: 2%;
+  top: 1%;
   font-size: 300%;
 }
 
 #timer{
   position: absolute;
-  top: 12%;
+  top: 10%;
   color: white;
 }
+
 input{
   border:solid black 1px;
   padding: 3px;
   border-radius: 5px;
+}
+.setumei{
+  color: white;
+  font-size: 110%;
 }
