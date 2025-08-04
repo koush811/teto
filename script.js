@@ -541,8 +541,8 @@ function drawHold() {
             if (holdShape[y][x]) {
                 ctx.fillStyle = holdColorLocal;
                 ctx.fillRect(
-                    holdX + (x + 1) * BLOCK_SIZE,
-                    holdY + (y + 1) * BLOCK_SIZE,
+                    holdX + (x ) * BLOCK_SIZE,
+                    holdY + (y ) * BLOCK_SIZE,
                     BLOCK_SIZE - 1,
                     BLOCK_SIZE - 1
                 );

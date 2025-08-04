@@ -14,13 +14,10 @@ body {
   background: #000;
   margin: auto;
   box-shadow: 0 0 20px rgb(255, 255, 255);
-  display: flex;
-  justify-content: center;
 }
 
 canvas{
   border: solid white 1px;
-  
 }  
 
 .btn{
@@ -82,6 +79,8 @@ canvas{
 }
 
 #timer{
+  font-size:30px;
+  font-family:sans-serif;
   position: absolute;
   top: 10%;
   color: white;
@@ -93,7 +92,8 @@ input{
   border-radius: 5px;
 }
 .setumei{
+  position: absolute;
   color: white;
   font-size: 110%;
-  margin-left: 50px;
+  left: 10%;
 }
